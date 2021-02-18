@@ -48,23 +48,19 @@ print(title_right[0])
 print('similar' if label[0] == 1 else 'different')
 
 model = Sequential()
-model.add(Conv2D(64, 3, activation='relu', input_shape=similarity_matrices[0].shape))
+model.add(Conv2D(64, 3, activation='selu', input_shape=similarity_matrices[0].shape))
 model.add(MaxPooling2D(2))
-model.add(Conv2D(64, 3, activation='relu'))
+model.add(Conv2D(64, 3, activation='selu'))
 model.add(Dropout(0.05))
 model.add(MaxPooling2D(2))
 
-model.add(Conv2D(64, 3, activation='relu'))
-model.add(Dropout(0.15))
-model.add(MaxPooling2D(2))
-
-model.add(Conv2D(64, 3, activation='relu'))
+model.add(Conv2D(64, 3, activation='selu'))
 model.add(Dropout(0.15))
 model.add(MaxPooling2D(2))
 
 model.add(Flatten())
 model.add(Dropout(0.25))
-model.add(Dense(16, activation='relu'))
+model.add(Dense(16, activation='selu'))
 model.add(Dense(1, activation='sigmoid'))
 
 print(model.summary())
