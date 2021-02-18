@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 class MatrixBuilder:
     BATCH_SIZE = 64
-    MATRIX_SIZE = (128, 128)
+    MATRIX_SIZE = (64, 64)
 
     def __init__(self):
         self.tokenizer = RobertaTokenizer.from_pretrained('roberta-base')

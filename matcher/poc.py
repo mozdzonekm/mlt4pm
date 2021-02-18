@@ -4,12 +4,15 @@ import pandas as pd
 
 import os
 import matplotlib.pyplot as plt
-from SimilarityMatrix import MatrixBuilder
+
+from sklearn.model_selection import StratifiedShuffleSplit
 
 import tensorflow as tf
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, BatchNormalization
 from tensorflow.keras.metrics import *
+
+from SimilarityMatrix import MatrixBuilder
 
 matrix_builder = MatrixBuilder()
 
@@ -33,34 +36,53 @@ print('Weight for class 1: {:.2f}'.format(weight_for_1))
 
 
 df = df.sample(frac=1).reset_index(drop=True)
-label = df.loc[:, 'label'].tolist()
-title_left = df.loc[:, 'title_left'].tolist()
-title_right = df.loc[:, 'title_right'].tolist()
 
-similarity_matrices = matrix_builder.build_matrices(title_left, title_right)
 
-exam_matrix = tf.squeeze(similarity_matrices[0])
+def preprocess_X_y(dataframe, feature, target):
+    label = dataframe.loc[:, target].tolist()
+    title_left = dataframe.loc[:, f'{feature}_left'].tolist()
+    title_right = dataframe.loc[:, f'{feature}_right'].tolist()
+    similarity_matrices = matrix_builder.build_matrices(title_left, title_right)
+    X = similarity_matrices
+    y = tf.convert_to_tensor(label)
+    return X, y
+
+
+def build_dataset(dataframe, feature='title', target='label'):
+    splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+    df_train, df_val = None, None
+    for train_idx, val_idx in splitter.split(dataframe, dataframe[target]):
+        df_train = dataframe.loc[train_idx, :]
+        df_val = dataframe.loc[val_idx, :]
+    X_train, y_train = preprocess_X_y(df_train, feature, target)
+    X_val, y_val = preprocess_X_y(df_val, feature, target)
+    return X_train, y_train, X_val, y_val
+
+
+X_train, y_train, X_val, y_val = build_dataset(df, 'title', 'label')
+exam_matrix = tf.squeeze(X_train[0])
 plt.matshow(exam_matrix)
 plt.show()
 
-print(title_left[0])
-print(title_right[0])
-print('similar' if label[0] == 1 else 'different')
 
 model = Sequential()
-model.add(Conv2D(64, 3, activation='selu', input_shape=similarity_matrices[0].shape))
+model.add(Conv2D(64, 3, activation='selu', input_shape=X_train[0].shape))
+model.add(BatchNormalization())
 model.add(MaxPooling2D(2))
-model.add(Conv2D(64, 3, activation='selu'))
+model.add(Conv2D(64, 3, activation='selu', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
+model.add(BatchNormalization())
 model.add(Dropout(0.05))
 model.add(MaxPooling2D(2))
 
-model.add(Conv2D(64, 3, activation='selu'))
-model.add(Dropout(0.15))
+model.add(Conv2D(64, 3, activation='selu', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
+model.add(BatchNormalization())
+model.add(Dropout(0.05))
 model.add(MaxPooling2D(2))
 
 model.add(Flatten())
-model.add(Dropout(0.25))
-model.add(Dense(16, activation='selu'))
+model.add(BatchNormalization())
+model.add(Dropout(0.15))
+model.add(Dense(32, activation='selu', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
 model.add(Dense(1, activation='sigmoid'))
 
 print(model.summary())
@@ -82,10 +104,9 @@ early_stopping = tf.keras.callbacks.EarlyStopping(
     mode='max',
     restore_best_weights=True)
 
-X = similarity_matrices
-y = tf.convert_to_tensor(label)
 
-h = model.fit(X, y, batch_size=64, epochs=100, validation_split=0.2,
+h = model.fit(X_train, y_train, batch_size=64, epochs=100,
+              validation_data=(X_val, y_val),
               class_weight=class_weight,
               callbacks=[early_stopping])
 
