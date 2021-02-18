@@ -15,7 +15,7 @@ matrix_builder = MatrixBuilder()
 
 DATA_DIR = '../data'
 
-dataset_path = os.path.join(DATA_DIR, 'computers_train', 'computers_train_small.json.gz')
+dataset_path = os.path.join(DATA_DIR, 'computers_train', 'computers_train_medium.json.gz')
 df = pd.read_json(dataset_path, compression='gzip', lines=True)
 
 neg, pos = np.bincount(df['label'])
@@ -51,12 +51,19 @@ model = Sequential()
 model.add(Conv2D(64, 3, activation='relu', input_shape=similarity_matrices[0].shape))
 model.add(MaxPooling2D(2))
 model.add(Conv2D(64, 3, activation='relu'))
+model.add(Dropout(0.05))
 model.add(MaxPooling2D(2))
+
 model.add(Conv2D(64, 3, activation='relu'))
+model.add(Dropout(0.15))
 model.add(MaxPooling2D(2))
+
 model.add(Conv2D(64, 3, activation='relu'))
+model.add(Dropout(0.15))
 model.add(MaxPooling2D(2))
+
 model.add(Flatten())
+model.add(Dropout(0.25))
 model.add(Dense(16, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 
@@ -72,11 +79,19 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[
     Recall(name='recall'),
     AUC(name='auc'),
 ])
+early_stopping = tf.keras.callbacks.EarlyStopping(
+    monitor='val_auc',
+    verbose=1,
+    patience=10,
+    mode='max',
+    restore_best_weights=True)
 
 X = similarity_matrices
 y = tf.convert_to_tensor(label)
 
-h = model.fit(X, y, batch_size=16, epochs=10, validation_split=0.2, class_weight=class_weight)
+h = model.fit(X, y, batch_size=64, epochs=100, validation_split=0.2,
+              class_weight=class_weight,
+              callbacks=[early_stopping])
 
 matplotlib.rcParams['figure.figsize'] = (12, 10)
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
