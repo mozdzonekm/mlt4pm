@@ -17,6 +17,21 @@ DATA_DIR = '../data'
 
 dataset_path = os.path.join(DATA_DIR, 'computers_train', 'computers_train_small.json.gz')
 df = pd.read_json(dataset_path, compression='gzip', lines=True)
+
+neg, pos = np.bincount(df['label'])
+total = neg + pos
+print('Examples:\n    Total: {}\n    Positive: {} ({:.2f}% of total)\n'.format(
+    total, pos, 100 * pos / total))
+
+weight_for_0 = (1 / neg)*(total)/2.0
+weight_for_1 = (1 / pos)*(total)/2.0
+
+class_weight = {0: weight_for_0, 1: weight_for_1}
+
+print('Weight for class 0: {:.2f}'.format(weight_for_0))
+print('Weight for class 1: {:.2f}'.format(weight_for_1))
+
+
 df = df.sample(frac=1).reset_index(drop=True)
 label = df.loc[:, 'label'].tolist()
 title_left = df.loc[:, 'title_left'].tolist()
@@ -36,15 +51,13 @@ model = Sequential()
 model.add(Conv2D(64, 3, activation='relu', input_shape=similarity_matrices[0].shape))
 model.add(MaxPooling2D(2))
 model.add(Conv2D(64, 3, activation='relu'))
-model.add(Conv2D(64, 3, activation='relu'))
 model.add(MaxPooling2D(2))
 model.add(Conv2D(64, 3, activation='relu'))
-model.add(Conv2D(64, 3, activation='relu'))
 model.add(MaxPooling2D(2))
-model.add(Conv2D(64, 3, activation='relu'))
 model.add(Conv2D(64, 3, activation='relu'))
 model.add(MaxPooling2D(2))
 model.add(Flatten())
+model.add(Dense(16, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 
 print(model.summary())
@@ -63,7 +76,7 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[
 X = similarity_matrices
 y = tf.convert_to_tensor(label)
 
-h = model.fit(X, y, batch_size=16, epochs=10, validation_split=0.2)
+h = model.fit(X, y, batch_size=16, epochs=10, validation_split=0.2, class_weight=class_weight)
 
 matplotlib.rcParams['figure.figsize'] = (12, 10)
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
