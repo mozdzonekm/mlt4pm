@@ -41,6 +41,7 @@ class MatrixBuilder:
     def _build_sim_matrix_from_rep(self, L, R):
         rep = tf.matmul(L, R, transpose_b=True)
         rep = tf.expand_dims(rep, axis=-1)
+        rep = tf.image.per_image_standardization(rep)
         rep = tf.image.resize_with_crop_or_pad(rep, self.MATRIX_SIZE[0], self.MATRIX_SIZE[1])
         return rep
 
