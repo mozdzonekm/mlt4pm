@@ -1,24 +1,28 @@
 import tensorflow as tf
 from transformers import TFRobertaModel, RobertaTokenizer
+from tqdm import tqdm
 
 
 class MatrixBuilder:
     BATCH_SIZE = 64
+    MATRIX_SIZE = (128, 128)
 
     def __init__(self):
         self.tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
         self.model = TFRobertaModel.from_pretrained('roberta-base')
 
     def build_matrices(self, input_left, input_right):
-        similarity_matrices = []
-        for in_L, in_R in self._batch_iterator(input_left, input_right):
+        dataset_size = len(input_left)
+        ta_metrices = []
+        batch_count = int(dataset_size / self.BATCH_SIZE) + 1
+        for in_L, in_R in tqdm(self._batch_iterator(input_left, input_right), total=batch_count):
             rep_left = self._get_internal_representation(in_L)
             rep_right = self._get_internal_representation(in_R)
-            similarity_matrices += [self._build_sim_matrix_from_rep(L, R) for L, R in zip(rep_left, rep_right)]
-        return similarity_matrices
+            ta_metrices += [self._build_sim_matrix_from_rep(L, R) for L, R in zip(rep_left, rep_right)]
+        ta_metrices = tf.convert_to_tensor(ta_metrices)
+        return ta_metrices
 
     def _batch_iterator(self, input_left, input_right):
-        assert len(input_left) == len(input_right)
         dataset_len = len(input_left)
         i = 0
         while (i + 1) * self.BATCH_SIZE < dataset_len:
@@ -34,6 +38,9 @@ class MatrixBuilder:
         internal_rep = model_outputs.last_hidden_state
         return internal_rep
 
-    @staticmethod
-    def _build_sim_matrix_from_rep(L, R):
-        return tf.matmul(L, R, transpose_b=True)
+    def _build_sim_matrix_from_rep(self, L, R):
+        rep = tf.matmul(L, R, transpose_b=True)
+        rep = tf.expand_dims(rep, axis=-1)
+        rep = tf.image.resize_with_crop_or_pad(rep, self.MATRIX_SIZE[0], self.MATRIX_SIZE[1])
+        return rep
+
