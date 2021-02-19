@@ -70,15 +70,18 @@ plt.show()
 
 
 model = Sequential()
-model.add(Conv2D(64, 3, activation='selu', input_shape=X_train[0].shape))
+model.add(Conv2D(64, 3, activation='selu', padding='same', input_shape=X_train[0].shape))
 model.add(BatchNormalization())
 model.add(MaxPooling2D(2))
-model.add(Conv2D(64, 3, activation='selu', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
+
+model.add(Conv2D(128, 3, activation='selu', padding='same', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
+model.add(Conv2D(128, 3, activation='selu', padding='same', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
 model.add(BatchNormalization())
 model.add(Dropout(0.05))
 model.add(MaxPooling2D(2))
 
-model.add(Conv2D(64, 3, activation='selu', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
+model.add(Conv2D(256, 3, activation='selu', padding='same', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
+model.add(Conv2D(256, 3, activation='selu', padding='same', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
 model.add(BatchNormalization())
 model.add(Dropout(0.05))
 model.add(MaxPooling2D(2))
@@ -113,7 +116,7 @@ datagen = ImageDataGenerator(
 datagen.fit(X_train)
 batch_size = 32
 h = model.fit(datagen.flow(X_train, y_train, batch_size=batch_size),
-              steps_per_epoch=len(X_train) / batch_size, epochs=300,
+              steps_per_epoch=len(X_train) / batch_size, epochs=500,
               validation_data=(X_val, y_val),
               class_weight=class_weight,
               callbacks=[early_stopping])
