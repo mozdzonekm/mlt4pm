@@ -14,6 +14,7 @@ from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropou
 from tensorflow.keras.metrics import *
 from tensorflow_addons.metrics import F1Score
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from SimilarityMatrix import MatrixBuilder
 
@@ -21,7 +22,7 @@ matrix_builder = MatrixBuilder()
 
 DATA_DIR = '../data'
 
-dataset_path = os.path.join(DATA_DIR, 'computers_train', 'computers_train_medium.json.gz')
+dataset_path = os.path.join(DATA_DIR, 'computers_train', 'computers_train_small.json.gz')
 df = pd.read_json(dataset_path, compression='gzip', lines=True)
 
 neg, pos = np.bincount(df['label'])
@@ -103,11 +104,16 @@ model.compile(loss='binary_crossentropy', optimizer=Adam(lr=5e-5), metrics=[
 early_stopping = tf.keras.callbacks.EarlyStopping(
     monitor='val_loss',
     verbose=1,
-    patience=10,
+    patience=50,
     restore_best_weights=True)
 
-
-h = model.fit(X_train, y_train, batch_size=64, epochs=300,
+datagen = ImageDataGenerator(
+    height_shift_range=0.2, width_shift_range=0.2,
+)
+datagen.fit(X_train)
+batch_size = 32
+h = model.fit(datagen.flow(X_train, y_train, batch_size=batch_size),
+              steps_per_epoch=len(X_train) / batch_size, epochs=300,
               validation_data=(X_val, y_val),
               class_weight=class_weight,
               callbacks=[early_stopping])
@@ -123,7 +129,7 @@ def plot_metrics(history):
         plt.subplot(2, 2, n + 1)
         plt.plot(history.epoch, history.history[metric], color=colors[0], label='Train')
         plt.plot(history.epoch, history.history['val_' + metric],
-                 color=colors[0], linestyle="--", label='Val')
+                 color=colors[1], linestyle="--", label='Val')
         plt.xlabel('Epoch')
         plt.ylabel(name)
         if metric == 'loss':

@@ -8,7 +8,7 @@ class MatrixBuilder:
     MATRIX_SIZE = (64, 64)
 
     def __init__(self):
-        self.tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
+        self.tokenizer = RobertaTokenizer.from_pretrained('roberta-base', do_lower_case=True)
         self.model = TFRobertaModel.from_pretrained('roberta-base')
 
     def build_matrices(self, input_left, input_right):
