@@ -8,9 +8,12 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedShuffleSplit
 
 import tensorflow as tf
+import tensorflow_addons as tfa
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, BatchNormalization
 from tensorflow.keras.metrics import *
+from tensorflow_addons.metrics import F1Score
+from tensorflow.keras.optimizers import Adam
 
 from SimilarityMatrix import MatrixBuilder
 
@@ -82,12 +85,12 @@ model.add(MaxPooling2D(2))
 model.add(Flatten())
 model.add(BatchNormalization())
 model.add(Dropout(0.15))
-model.add(Dense(32, activation='selu', kernel_regularizer=tf.keras.regularizers.l2(0.01)))
+model.add(Dense(32, activation='selu', kernel_regularizer=tf.keras.regularizers.l2(0.03)))
 model.add(Dense(1, activation='sigmoid'))
 
 print(model.summary())
 
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[
+model.compile(loss='binary_crossentropy', optimizer=Adam(lr=5e-5), metrics=[
     TruePositives(name='tp'),
     FalsePositives(name='fp'),
     TrueNegatives(name='tn'),
@@ -98,14 +101,13 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[
     AUC(name='auc'),
 ])
 early_stopping = tf.keras.callbacks.EarlyStopping(
-    monitor='val_auc',
+    monitor='val_loss',
     verbose=1,
     patience=10,
-    mode='max',
     restore_best_weights=True)
 
 
-h = model.fit(X_train, y_train, batch_size=64, epochs=100,
+h = model.fit(X_train, y_train, batch_size=64, epochs=300,
               validation_data=(X_val, y_val),
               class_weight=class_weight,
               callbacks=[early_stopping])
