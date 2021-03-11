@@ -138,7 +138,7 @@ def plot_metrics(history):
         if metric == 'loss':
             plt.ylim([0, plt.ylim()[1]])
         elif metric == 'auc':
-            plt.ylim([0.8, 1])
+            plt.ylim([0.5, 1])
         else:
             plt.ylim([0, 1])
 
@@ -147,3 +147,25 @@ def plot_metrics(history):
 
 plot_metrics(h)
 plt.show()
+
+print('MODEL EVALUATION')
+print(model.evaluate(X_val, y_val))
+
+from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+
+
+def compute_metrics(pred):
+    labels = pred.label_ids
+    preds = pred.predictions.argmax(-1)
+    precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='binary')
+    acc = accuracy_score(labels, preds)
+    return {
+        'accuracy': acc,
+        'f1': f1,
+        'precision': precision,
+        'recall': recall
+    }
+
+
+pred = model.predict(X_val, y_val)
+print(compute_metrics(pred))
