@@ -153,7 +153,7 @@ def train_model(model_name, dataset_type, dataset_size, google=False):
     logdir = os.path.join("logs", logdir_name)
     training_args = TrainingArguments(
         output_dir='./results',          
-        num_train_epochs=15,              # total number of training epochs
+        num_train_epochs=10,              # total number of training epochs
         per_device_train_batch_size=16,   # batch size per device during training
         per_device_eval_batch_size=64,    # batch size for evaluation
         warmup_steps=500,                 # number of warmup steps for learning rate scheduler
@@ -163,7 +163,8 @@ def train_model(model_name, dataset_type, dataset_size, google=False):
         disable_tqdm=False,               # show some progress
         fp16=True,                        # float 16 acceleration
         evaluation_strategy='epoch',      # evaluate after epoch
-        save_strategy='no',               # dont create checkpoint
+        load_best_model_at_end =True,     # load best model
+        metric_for_best_model='eval_f1'   # use model with best F1 score
     )
     model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
     trainer = Trainer(
@@ -205,6 +206,7 @@ def train_model(model_name, dataset_type, dataset_size, google=False):
         log_path = Path(os.path.join(DRIVE, "MGR", "PL", "logs", logdir_name))
         log_path.mkdir(parents=True, exist_ok=True)
         os.system(f'cp -R {logdir} {log_path}')
+    os.system('rm -R ./results')
     print('EXPERIMENT ENDED \n\n')
 
 
