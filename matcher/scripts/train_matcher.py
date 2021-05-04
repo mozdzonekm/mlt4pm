@@ -17,7 +17,8 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from google.colab import drive
 
 
-class DatasetLoader:
+
+class PolishDatasetLoader:
     MAIN_DIR_PATH = 'https://github.com/WilyLynx/tcn4pm/raw/master/data/PolishDataset'
 
     @staticmethod
@@ -31,7 +32,7 @@ class DatasetLoader:
         Returns:
             pd.DataFrame: training dataset
         """
-        path = f'{DatasetLoader.MAIN_DIR_PATH}/{type}_train/pl_wdc_{type}_{size}.json.gz'
+        path = f'{PolishDatasetLoader.MAIN_DIR_PATH}/{type}_train/pl_wdc_{type}_{size}.json.gz'
         df = pd.read_json(path, compression='gzip', lines=True)
         return df.reset_index()
 
@@ -45,7 +46,7 @@ class DatasetLoader:
         Returns:
             pd.DataFrame: test dataset
         """
-        path = f'{DatasetLoader.MAIN_DIR_PATH}/test/pl_wdc_{type}_test.json.gz'
+        path = f'{PolishDatasetLoader.MAIN_DIR_PATH}/test/pl_wdc_{type}_test.json.gz'
         df = pd.read_json(path, compression='gzip', lines=True)
         return df.reset_index()
 
@@ -132,7 +133,7 @@ def compute_metrics(pred):
     }
 
 
-def train_model(model_name, dataset_type, dataset_size, google=False):
+def train_model(model_name, dataset_type, dataset_size, dataset_loader, google=False):
     print(f'BEGIN  EXPERIMENT')
     print(f'model: {model_name}')
     print(f'dataset: {dataset_type}')
@@ -143,10 +144,10 @@ def train_model(model_name, dataset_type, dataset_size, google=False):
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
     title_fb = FeatureBuilder(['title'])
 
-    train_df = DatasetLoader.load_train(dataset_type, dataset_size)
+    train_df = dataset_loader.load_train(dataset_type, dataset_size)
     train_dataset, val_dataset = preprocess_train_val(train_df, title_fb, tokenizer)
 
-    test_df = DatasetLoader.load_test(dataset_type)
+    test_df = dataset_loader.load_test(dataset_type)
     test_dataset = preprocess_test(test_df, title_fb, tokenizer)
 
     logdir_name = f'{model_name}_{dataset_type}_{dataset_size}'
@@ -212,4 +213,4 @@ def train_model(model_name, dataset_type, dataset_size, google=False):
 
 if __name__ == '__main__':
     args = parse_args()
-    train_model(args.model, args.dataset, args.size, args.google)
+    train_model(args.model, args.dataset, args.size, PolishDatasetLoader, args.google)
