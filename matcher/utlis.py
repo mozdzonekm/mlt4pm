@@ -62,7 +62,7 @@ class EnglishDatasetLoader:
         p = Path(os.path.join('wdc_train', f'{type}_train'))
         p.mkdir(parents=True, exist_ok=True)
         dataset_path = p.join(f'{type}_train_{size}.json.gz')
-        if !os.path.exists(dataset_path):
+        if not os.path.exists(dataset_path):
             zip_path = f'{p}.zip'
             url = f'{EnglishDatasetLoader.MAIN_DIR_PATH}/trainsets/{type}_train.zip'
             r = requests.get(url, allow_redirects=True)
