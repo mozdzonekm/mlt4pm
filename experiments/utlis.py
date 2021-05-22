@@ -1,7 +1,4 @@
 import os
-import sys
-import datetime
-import argparse
 from pathlib import Path
 import requests
 from zipfile import ZipFile
@@ -61,7 +58,7 @@ class EnglishDatasetLoader:
         """
         p = Path(os.path.join('wdc_train', f'{type}_train'))
         p.mkdir(parents=True, exist_ok=True)
-        dataset_path = p.join(f'{type}_train_{size}.json.gz')
+        dataset_path = f'{p}/{type}_train_{size}.json.gz'
         if not os.path.exists(dataset_path):
             zip_path = f'{p}.zip'
             url = f'{EnglishDatasetLoader.MAIN_DIR_PATH}/trainsets/{type}_train.zip'
