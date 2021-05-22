@@ -19,7 +19,7 @@ from google.colab import drive
 
 
 class PolishDatasetLoader:
-    MAIN_DIR_PATH = 'https://github.com/WilyLynx/tcn4pm/raw/master/data/PolishDataset'
+    MAIN_DIR_PATH = 'https://github.com/WilyLynx/mlt4pm/raw/master/data/PolishDataset'
 
     @staticmethod
     def load_train(type:object, size:object)->pd.DataFrame:

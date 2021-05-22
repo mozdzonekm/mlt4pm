@@ -1,3 +1,4 @@
 # Data
 
-In order to download data run script get_data.py
+- EnglishDataset - downloading English WDC Datasets
+- PolishDataset - preparing Polish dataset
